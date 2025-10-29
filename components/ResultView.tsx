@@ -33,24 +33,24 @@ export default function ResultView({ archetype, onRestart, onExplore }: Props) {
 
   return (
     <motion.div
-      className="w-full max-w-xl text-center fade-in"
+      className="w-full max-w-xl mx-auto text-left sm:text-center fade-in px-1 sm:px-0"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
-      <h2 className="text-3xl font-bold">
+      <h2 className="text-3xl sm:text-4xl font-bold leading-tight">
         {language === "en"
           ? `You’re a ${archetype}! 🌿`
           : `Jouw archetype is ${archetype}! 🌿`}
       </h2>
 
-      <p className="text-foreground/70 mt-3 text-base sm:text-lg">{copy}</p>
+      <p className="text-foreground/70 mt-4 text-base sm:text-lg leading-relaxed">{copy}</p>
 
       {/* Restart button */}
       <div className="mt-8">
         <button
           onClick={onRestart}
-          className="px-6 py-3 rounded-soft bg-primary text-black font-medium hover:bg-primary/90 transition shadow-soft"
+          className="w-full sm:w-auto px-6 py-3 rounded-full bg-primary text-black font-semibold hover:bg-primary/90 transition shadow-soft"
         >
           {language === "en" ? "Restart Quiz" : "Herstart de quiz"}
         </button>
@@ -62,12 +62,12 @@ export default function ResultView({ archetype, onRestart, onExplore }: Props) {
           {language === "en" ? "View other archetypes:" : "Bekijk andere archetypen:"}
         </p>
 
-        <div className="flex flex-wrap gap-3 justify-center">
+        <div className="flex flex-wrap gap-2.5 justify-start sm:justify-center">
           {ALL.map((type: ArchetypeId) => (
             <button
               key={type}
               onClick={() => onExplore(type)}
-              className={`px-4 py-2 rounded-soft border text-sm transition font-medium
+              className={`min-w-[110px] px-4 py-2 rounded-full border text-sm transition font-medium
                 ${
                   type === archetype
                     ? "border-primary text-primary"

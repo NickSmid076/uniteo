@@ -121,36 +121,43 @@ export default function ArchetypeDetail({ type, onBack }: Props) {
 
   return (
     <motion.div
-      className="max-w-2xl mx-auto text-center space-y-6 fade-in"
+      className="w-full max-w-2xl mx-auto text-left sm:text-center space-y-5 sm:space-y-6 fade-in px-1 sm:px-0"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
       {/* Title */}
-      <h2 className="text-4xl font-bold">{data.title}</h2>
+      <h2 className="text-3xl sm:text-4xl font-bold leading-tight">{data.title}</h2>
 
       {/* Description */}
-      <p className="text-foreground/80 leading-relaxed">{data.description}</p>
+      <p className="text-foreground/75 leading-relaxed text-base sm:text-lg">
+        {data.description}
+      </p>
 
       {/* Traits */}
-      <ul className="space-y-2 text-foreground/80 text-base mt-6">
-        {data.traits.map((trait) => (
-          <li key={trait}>• {trait}</li>
-        ))}
-      </ul>
+      <div className="mt-6 bg-foreground/5 rounded-3xl border border-foreground/10 px-5 py-4 sm:px-6 sm:py-5 backdrop-blur">
+        <ul className="space-y-2.5 text-foreground/80 text-sm sm:text-base">
+          {data.traits.map((trait) => (
+            <li key={trait} className="flex items-start gap-2">
+              <span className="text-primary mt-0.5">•</span>
+              <span>{trait}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {/* Growth advice */}
-      <p className="text-foreground/70 italic mt-6">{data.growth}</p>
+      <p className="text-foreground/70 italic mt-4 sm:mt-6 text-base">{data.growth}</p>
 
       {/* Back button */}
       <button
         onClick={onBack}
-        className={`mt-10 px-8 py-3 rounded-soft font-medium transition shadow-soft
-          ${
-            theme === "dark"
-              ? "bg-primary text-black hover:bg-primary/90"
-              : "bg-primary text-black hover:bg-primary/90"
-          }`}
+        className={`mt-8 sm:mt-10 w-full sm:w-auto px-8 py-3 rounded-full font-semibold transition shadow-soft ${
+          theme === "dark"
+            ? "bg-primary text-black hover:bg-primary/90"
+            : "bg-primary text-black hover:bg-primary/90"
+        }`}
+        type="button"
       >
         {language === "en" ? "← Back to Results" : "← Terug naar resultaten"}
       </button>

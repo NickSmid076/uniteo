@@ -127,14 +127,16 @@ export default function QuizContainer() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex items-center justify-center px-4 sm:px-8 py-10 sm:py-20 transition-colors duration-300">
-      <div className="w-full max-w-2xl text-center relative">
+    <main className="min-h-dvh bg-[var(--background)] text-[var(--foreground)] flex items-center justify-center px-3 sm:px-8 py-8 sm:py-20 transition-colors duration-300">
+      <div className="w-full max-w-2xl text-center relative space-y-6 sm:space-y-8">
         {/* Progress bar + saving indicator */}
         {state.index >= 0 && state.index < TOTAL && (
-          <div className="mb-4 space-y-2">
+          <div className="space-y-2 px-1 sm:px-0">
             <Progress step={progressStep} total={TOTAL} />
             {submitting && (
-              <p className="text-sm text-[#00BFA5]/80 animate-pulse">Saving your results...</p>
+              <p className="text-xs sm:text-sm text-primary/80 animate-pulse">
+                Saving your results...
+              </p>
             )}
           </div>
         )}
