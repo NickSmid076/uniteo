@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import type { Locale } from "../utils/i18n";
 
@@ -18,7 +18,7 @@ const LANGUAGE_STORAGE_KEY = "uniteo-lang";
 
 const isBrowser = () => typeof window !== "undefined";
 
-const detectInitialTheme = (): Theme => {
+const readStoredTheme = (): Theme => {
   if (!isBrowser()) return "light";
 
   const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
@@ -29,7 +29,7 @@ const detectInitialTheme = (): Theme => {
   return prefersDark ? "dark" : "light";
 };
 
-const detectInitialLanguage = (): Locale => {
+const readStoredLanguage = (): Locale => {
   if (!isBrowser()) return "en";
 
   const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY) as Locale | null;
@@ -42,8 +42,18 @@ const detectInitialLanguage = (): Locale => {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => detectInitialTheme());
-  const [language, setLanguage] = useState<Locale>(() => detectInitialLanguage());
+  const [theme, setTheme] = useState<Theme>("light");
+  const [language, setLanguage] = useState<Locale>("en");
+  const [, startPreferenceTransition] = useTransition();
+
+  useEffect(() => {
+    if (!isBrowser()) return;
+
+    startPreferenceTransition(() => {
+      setTheme(readStoredTheme());
+      setLanguage(readStoredLanguage());
+    });
+  }, [startPreferenceTransition]);
 
   useEffect(() => {
     if (!isBrowser()) return;

@@ -1,4 +1,8 @@
+"use client";
+
+import { motion } from "framer-motion";
 import { type ArchetypeId } from "../types/quiz";
+import { useApp } from "../context/AppContext";
 
 type Props = {
   type: ArchetypeId;
@@ -12,7 +16,7 @@ type ArchetypeInfo = {
   growth: string;
 };
 
-const ARCHETYPE_DATA: Record<ArchetypeId, ArchetypeInfo> = {
+const ARCHETYPE_DATA_EN: Record<ArchetypeId, ArchetypeInfo> = {
   Connector: {
     title: "Connector 🌿",
     description:
@@ -59,28 +63,97 @@ const ARCHETYPE_DATA: Record<ArchetypeId, ArchetypeInfo> = {
   },
 };
 
+const ARCHETYPE_DATA_NL: Record<ArchetypeId, ArchetypeInfo> = {
+  Connector: {
+    title: "Connector 🌿",
+    description:
+      "Je verbindt mensen en bloeit op door betekenisvolle samenwerking. Je inspireert anderen en bouwt netwerken waarin ideeën groeien.",
+    traits: [
+      "Sterke empathie en communicatie",
+      "Gedreven door relaties",
+      "Creëert verbinding en vertrouwen",
+    ],
+    growth:
+      "Werk samen aan nieuwe initiatieven of coach anderen binnen je netwerk.",
+  },
+  Builder: {
+    title: "Builder 🧱",
+    description:
+      "Je zet ideeën om in tastbare resultaten. Structuur, planning en impact geven je voldoening.",
+    traits: [
+      "Georganiseerd en praktisch",
+      "Doelgerichte mindset",
+      "Gedijt op vooruitgang en duidelijkheid",
+    ],
+    growth:
+      "Werk aan langetermijnprojecten of help anderen structuur te brengen in hun doelen.",
+  },
+  Explorer: {
+    title: "Explorer 🌍",
+    description:
+      "Je bent nieuwsgierig, geïnspireerd en gemotiveerd door ontdekking. Je houdt van leren, ideeën verkennen en nieuwe paden bewandelen.",
+    traits: [
+      "Avontuurlijke geest",
+      "Houdt van leren en experimenteren",
+      "Krijgt energie van verandering en vernieuwing",
+    ],
+    growth:
+      "Zoek variatie en deel wat je leert — jouw nieuwsgierigheid inspireert anderen.",
+  },
+  Reflector: {
+    title: "Reflector 🪞",
+    description:
+      "Je brengt diepte, rust en perspectief. Je helpt anderen vertragen, nadenken en groeien door reflectie.",
+    traits: [
+      "Introspectief en evenwichtig",
+      "Ziet patronen en inzichten",
+      "Hecht waarde aan authenticiteit en harmonie",
+    ],
+    growth:
+      "Creëer momenten van reflectie of begeleid anderen naar helderheid en balans.",
+  },
+};
+
 export default function ArchetypeDetail({ type, onBack }: Props) {
-  const data = ARCHETYPE_DATA[type];
+  const { language, theme } = useApp();
+  const data =
+    language === "nl" ? ARCHETYPE_DATA_NL[type] : ARCHETYPE_DATA_EN[type];
 
   return (
-    <div className="max-w-2xl text-center space-y-6">
+    <motion.div
+      className="max-w-2xl mx-auto text-center space-y-6 fade-in"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
+      {/* Title */}
       <h2 className="text-4xl font-bold">{data.title}</h2>
-      <p className="text-white/70">{data.description}</p>
 
-      <ul className="space-y-1 text-white/80">
-        {data.traits.map((trait: string) => (
+      {/* Description */}
+      <p className="text-foreground/80 leading-relaxed">{data.description}</p>
+
+      {/* Traits */}
+      <ul className="space-y-2 text-foreground/80 text-base mt-6">
+        {data.traits.map((trait) => (
           <li key={trait}>• {trait}</li>
         ))}
       </ul>
 
-      <p className="text-white/70 italic mt-4">{data.growth}</p>
+      {/* Growth advice */}
+      <p className="text-foreground/70 italic mt-6">{data.growth}</p>
 
+      {/* Back button */}
       <button
         onClick={onBack}
-        className="mt-8 px-8 py-3 rounded-2xl bg-[#00BFA5] text-black font-medium hover:bg-[#00BFA5]/90 transition"
+        className={`mt-10 px-8 py-3 rounded-soft font-medium transition shadow-soft
+          ${
+            theme === "dark"
+              ? "bg-primary text-black hover:bg-primary/90"
+              : "bg-primary text-black hover:bg-primary/90"
+          }`}
       >
-        ← Back to Results
+        {language === "en" ? "← Back to Results" : "← Terug naar resultaten"}
       </button>
-    </div>
+    </motion.div>
   );
 }
