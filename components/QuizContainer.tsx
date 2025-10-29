@@ -1,28 +1,34 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useApp } from "../context/AppContext";
-import { type ArchetypeId, type Question, type QuizState } from "../types/quiz";
+"use client";
 
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+
+import { useApp } from "../context/AppContext";
+import type { ArchetypeId, Question, QuizState } from "../types/quiz";
 import { getTranslation } from "../utils/i18n";
-import { QUESTIONS_ORDER, getQuestions } from "../utils/questions";
+import {
+  QUESTIONS_ORDER,
+  getQuestions,
+  normalizeAnswerMap,
+} from "../utils/questions";
 import { calculateArchetype } from "../utils/scoring";
 import { clearState, loadState, saveState } from "../utils/storage";
 import { submitQuiz } from "../utils/submitQuiz";
 
+import ArchetypeDetail from "./ArchetypeDetail";
+import EndScreen from "./EndScreen";
 import IntroForm from "./IntroForm";
 import Progress from "./Progress";
 import QuestionView from "./QuestionView";
 import ResultView from "./ResultView";
 import WelcomeScreen from "./WelcomeScreen";
-import ArchetypeDetail from "./ArchetypeDetail";
-import EndScreen from "./EndScreen";
 
 const INITIAL: QuizState = {
   name: "",
   age: "",
   email: "",
   answers: {},
-  index: -2, // start at welcome screen
+  index: -2, // -2 = welcome, -1 = intro
 };
 
 export default function QuizContainer() {
@@ -34,25 +40,27 @@ export default function QuizContainer() {
   const [showDetail, setShowDetail] = useState<ArchetypeId | null>(null);
   const [showEnd, setShowEnd] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [, startHydrationTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const hasHydrated = useRef(false);
 
-  const progressStep = Math.max(0, Math.min(state.index + 1, totalQuestions));
-
-  // hydrate from localStorage after mount
+  // hydrate once from localStorage
   useEffect(() => {
     const saved = loadState();
     if (saved) {
-      startHydrationTransition(() => {
+      const normalized = {
+        ...saved,
+        answers: normalizeAnswerMap(saved.answers ?? {}),
+      };
+      startTransition(() => {
         hasHydrated.current = true;
-        setState(saved);
+        setState(normalized);
       });
     } else {
       hasHydrated.current = true;
     }
-  }, [startHydrationTransition]);
+  }, [startTransition]);
 
-  // persist to localStorage
+  // persist after hydration to avoid SSR mismatch
   useEffect(() => {
     if (!hasHydrated.current) return;
     saveState(state);
@@ -61,15 +69,20 @@ export default function QuizContainer() {
   const current = useMemo<Question | undefined>(() => {
     if (state.index < 0 || state.index >= totalQuestions) return undefined;
     return questions[state.index];
-  }, [state.index, totalQuestions, questions]);
+  }, [state.index, questions, totalQuestions]);
+
+  const progressStep = Math.max(0, Math.min(state.index + 1, totalQuestions));
 
   function start(payload: { name: string; age: string; email: string }) {
     setState((s: QuizState) => ({ ...s, ...payload, index: 0 }));
   }
 
-  function answerUpdate(val: string) {
+  function answerUpdate(value: string) {
     if (!current) return;
-    setState((s: QuizState) => ({ ...s, answers: { ...s.answers, [current.id]: val } }));
+    setState((s: QuizState) => ({
+      ...s,
+      answers: { ...s.answers, [current.id]: value },
+    }));
   }
 
   async function goNext() {
@@ -78,27 +91,43 @@ export default function QuizContainer() {
       return;
     }
 
-    // finished -> compute archetype
-    const arch = calculateArchetype(state.answers);
-    setState((s: QuizState) => ({ ...s, index: totalQuestions, archetype: arch }));
+    const normalizedAnswers = normalizeAnswerMap(state.answers);
+    const archetype = calculateArchetype(normalizedAnswers);
 
-    // submit to backend
+    const submissionAnswers = QUESTIONS_ORDER.map((question) => {
+      const answerValue = normalizedAnswers[question.id] ?? "";
+      if (!answerValue) return "";
+      if (question.options) {
+        const option = question.options.find(
+          (candidate) => candidate.value === answerValue
+        );
+        return option ? option.label : answerValue;
+      }
+      return answerValue;
+    });
+
+    setState((s: QuizState) => ({
+      ...s,
+      answers: normalizedAnswers,
+      index: totalQuestions,
+      archetype,
+    }));
+
     const payload = {
       name: state.name,
       age: state.age,
       email: state.email,
-      archetype: arch,
-      answers: QUESTIONS_ORDER.map((question: Question) => state.answers[question.id] ?? ""),
+      archetype,
+      answers: submissionAnswers,
     };
 
     setSubmitting(true);
     try {
       await submitQuiz(payload);
     } catch {
-      // silent fail
+      // intentionally silent – quiz should not break if submission fails
     } finally {
       setSubmitting(false);
-      // show end screen automatically after 4s
       setTimeout(() => setShowEnd(true), 4000);
     }
   }
@@ -131,55 +160,51 @@ export default function QuizContainer() {
   }
 
   return (
-    <main className="min-h-dvh bg-[var(--background)] text-[var(--foreground)] flex items-center justify-center px-3 sm:px-8 py-8 sm:py-20 transition-colors duration-300">
-      <div className="w-full max-w-2xl text-center relative space-y-6 sm:space-y-8">
-        {/* Progress bar + saving indicator */}
-        {state.index >= 0 && state.index < totalQuestions && (
-          <div className="space-y-2 px-1 sm:px-0">
-            <Progress step={progressStep} total={totalQuestions} />
-            {submitting && (
-              <p className="text-xs sm:text-sm text-primary/80 animate-pulse">
-                {getTranslation(language, "saving_results")}
-              </p>
-            )}
-          </div>
-        )}
+    <div className="relative w-full">
+      {state.index >= 0 && state.index < totalQuestions && (
+        <div className="mb-6 space-y-2">
+          <Progress step={progressStep} total={totalQuestions} />
+          {submitting && (
+            <p className="text-xs sm:text-sm text-primary/80 animate-pulse">
+              {getTranslation(language, "saving_results")}
+            </p>
+          )}
+        </div>
+      )}
 
+      <div className="w-full max-w-2xl mx-auto">
         <AnimatePresence mode="wait">
-          {/* Welcome */}
           {state.index === -2 && (
             <motion.div
               key="welcome"
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
+              exit={{ opacity: 0, y: -40 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
             >
               <WelcomeScreen onContinue={continueFromWelcome} />
             </motion.div>
           )}
 
-          {/* Intro */}
           {state.index === -1 && (
             <motion.div
               key="intro"
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
+              exit={{ opacity: 0, y: -40 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
             >
               <IntroForm onStart={start} />
             </motion.div>
           )}
 
-          {/* Questions */}
           {state.index >= 0 && state.index < totalQuestions && current && (
             <motion.div
               key={`question-${state.index}`}
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
             >
               <QuestionView
                 question={current}
@@ -194,50 +219,50 @@ export default function QuizContainer() {
             </motion.div>
           )}
 
-          {/* Results */}
-          {state.index === totalQuestions && state.archetype && !showDetail && !showEnd && (
-            <motion.div
-              key="result"
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -40 }}
-              transition={{ duration: 0.4 }}
-            >
-              <ResultView
-                archetype={state.archetype}
-                onRestart={restart}
-                onExplore={exploreArchetype}
-              />
-            </motion.div>
-          )}
+          {state.index === totalQuestions &&
+            state.archetype &&
+            !showDetail &&
+            !showEnd && (
+              <motion.div
+                key="result"
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -40 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
+                <ResultView
+                  archetype={state.archetype}
+                  onRestart={restart}
+                  onExplore={exploreArchetype}
+                />
+              </motion.div>
+            )}
 
-          {/* Archetype detail */}
-          {showDetail !== null && (
+          {showDetail && (
             <motion.div
               key="detail"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
             >
               <ArchetypeDetail type={showDetail} onBack={backToResults} />
             </motion.div>
           )}
 
-          {/* End screen */}
           {showEnd && (
             <motion.div
               key="end"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
             >
               <EndScreen onRestart={restart} />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
-    </main>
+    </div>
   );
 }

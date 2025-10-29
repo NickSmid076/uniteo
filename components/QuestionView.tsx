@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import type { ChangeEvent } from "react";
 import { useApp } from "../context/AppContext";
 import { type Question } from "../types/quiz";
@@ -16,7 +19,14 @@ type Props = {
 };
 
 export default function QuestionView({
-  question, value, onChange, onNext, onBack, canBack, step, total,
+  question,
+  value,
+  onChange,
+  onNext,
+  onBack,
+  canBack,
+  step,
+  total,
 }: Props) {
   const { language } = useApp();
   const label = getTranslation(language, "question_label");
@@ -26,18 +36,36 @@ export default function QuestionView({
   const nextLabel = getTranslation(language, "question_next");
   const textPlaceholder = getTranslation(language, "question_text_placeholder");
 
-  const canContinue = question.kind === "text" ? value.trim().length > 0 : Boolean(value);
+  const canContinue =
+    question.kind === "text" ? value.trim().length > 0 : Boolean(value);
 
   return (
-    <div className="w-full max-w-xl mx-auto px-1 sm:px-0">
-      <div className="flex items-start justify-between gap-3 mb-4 text-xs sm:text-sm text-foreground/60">
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="relative w-full max-w-md mx-auto px-5 sm:px-6 py-6 sm:py-10 overflow-hidden"
+    >
+      {/* ✨ Ambient gradient backdrop */}
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 rounded-[2rem]"
+        style={{
+          background:
+            "radial-gradient(80% 50% at 50% -10%, rgba(0,191,165,0.10), transparent 70%), radial-gradient(50% 40% at 50% 100%, rgba(255,255,255,0.04), transparent 80%)",
+        }}
+      />
+
+      {/* Progress + Back */}
+      <div className="flex items-start justify-between gap-3 mb-5 text-xs sm:text-sm text-foreground/60">
         <span className="uppercase tracking-widest font-medium">
           {label} {step} {of} {total}
         </span>
+
         {canBack && (
           <button
             onClick={onBack}
-            className="text-foreground/70 hover:text-foreground transition font-medium"
+            className="text-foreground/70 hover:text-primary transition font-medium"
             type="button"
           >
             ← {step === 1 ? backIntro : backLabel}
@@ -45,56 +73,72 @@ export default function QuestionView({
         )}
       </div>
 
-      <h2 className="text-2xl sm:text-3xl font-semibold leading-snug">{question.title}</h2>
+      {/* Question text */}
+      <h2 className="text-2xl sm:text-3xl font-bold leading-snug text-foreground mb-3">
+        {question.title}
+      </h2>
+
       {question.hint && (
-        <p className="text-sm sm:text-base text-foreground/65 mt-2 leading-relaxed">{question.hint}</p>
+        <p className="text-sm sm:text-base text-foreground/70 leading-relaxed mb-5">
+          {question.hint}
+        </p>
       )}
 
-      <div className="mt-6 space-y-3">
+      {/* Choice or Text */}
+      <div className="space-y-3 sm:space-y-4">
         {question.kind === "choice" &&
-          question.options?.map((opt: string) => (
+          question.options?.map((opt) => (
             <OptionButton
-              key={opt}
-              label={opt}
-              selected={value === opt}
-              onClick={() => onChange(opt)}
+              key={opt.value}
+              label={opt.label}
+              selected={value === opt.value}
+              onClick={() => onChange(opt.value)}
             />
           ))}
 
         {question.kind === "text" && (
-          <textarea
-            className="w-full min-h-[150px] sm:min-h-[180px] bg-white/8 dark:bg-white/5 border border-foreground/15 rounded-3xl px-4 py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-primary/60 transition"
+          <motion.textarea
+            whileFocus={{ scale: 1.01 }}
+            className="w-full min-h-[150px] sm:min-h-[180px] bg-white/[0.04] border border-white/10 rounded-3xl px-4 py-3 text-sm sm:text-base text-foreground placeholder-foreground/40 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary/60 transition"
             placeholder={textPlaceholder}
             value={value}
-            onChange={(event: ChangeEvent<HTMLTextAreaElement>) => onChange(event.target.value)}
+            onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
+              onChange(event.target.value)
+            }
           />
         )}
       </div>
 
-      <div className="mt-7 flex flex-col sm:flex-row sm:justify-between gap-3">
+      {/* Navigation */}
+      <div className="mt-8 flex flex-col sm:flex-row sm:justify-between gap-3">
         {canBack && (
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             onClick={onBack}
-            className="w-full sm:w-auto px-5 py-3 rounded-full border border-foreground/15 text-sm font-medium text-foreground/70 hover:bg-foreground/5 transition"
+            className="w-full sm:w-auto px-6 py-3 rounded-full border border-white/10 text-sm font-medium text-foreground/80 hover:bg-white/[0.05] transition backdrop-blur-md"
             type="button"
           >
-            Back
-          </button>
+            ← {backLabel}
+          </motion.button>
         )}
-        <button
+
+        <motion.button
+          whileHover={canContinue ? { scale: 1.03 } : {}}
+          whileTap={canContinue ? { scale: 0.97 } : {}}
           onClick={onNext}
           disabled={!canContinue}
-          className={`w-full sm:w-auto px-6 py-3 rounded-full font-semibold transition shadow-soft
+          type="button"
+          className={`w-full sm:w-auto px-6 py-3 rounded-full font-semibold transition-all duration-300 shadow-[0_0_24px_rgba(0,191,165,0.25)]
             ${
               canContinue
-                ? "bg-primary text-black hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/60"
-                : "bg-foreground/10 text-foreground/40 cursor-not-allowed"
+                ? "bg-gradient-to-r from-[#00BFA5] to-[#00d3b9] text-black hover:from-[#00d3b9] hover:to-[#00BFA5]"
+                : "bg-white/[0.06] text-foreground/40 cursor-not-allowed shadow-none"
             }`}
-          type="button"
         >
           {nextLabel}
-        </button>
+        </motion.button>
       </div>
-    </div>
+    </motion.div>
   );
 }

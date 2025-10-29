@@ -1,11 +1,16 @@
 export type QuestionKind = "choice" | "text";
 
+export type QuestionOption = {
+  value: string;
+  label: string;
+};
+
 export type Question = {
   id: number;
   kind: QuestionKind;
   title: string;
   hint?: string;
-  options?: string[]; // only for kind === "choice"
+  options?: QuestionOption[]; // only for kind === "choice"
   required?: boolean;
 };
 
