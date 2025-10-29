@@ -160,109 +160,100 @@ export default function QuizContainer() {
   }
 
   return (
-    <div className="relative w-full">
+    <div className="app-shell">
       {state.index >= 0 && state.index < totalQuestions && (
-        <div className="mb-6 space-y-2">
+        <div className="space-y-2">
           <Progress step={progressStep} total={totalQuestions} />
           {submitting && (
-            <p className="text-xs sm:text-sm text-primary/80 animate-pulse">
+            <p className="text-xs text-foreground-soft animate-pulse">
               {getTranslation(language, "saving_results")}
             </p>
           )}
         </div>
       )}
 
-      <div className="w-full max-w-2xl mx-auto">
-        <AnimatePresence mode="wait">
-          {state.index === -2 && (
+      <AnimatePresence mode="wait">
+        {state.index === -2 && (
+          <motion.div
+            key="welcome"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
+            <WelcomeScreen onContinue={continueFromWelcome} />
+          </motion.div>
+        )}
+
+        {state.index === -1 && (
+          <motion.div
+            key="intro"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
+            <IntroForm onStart={start} />
+          </motion.div>
+        )}
+
+        {state.index >= 0 && state.index < totalQuestions && current && (
+          <QuestionView
+            key={`question-${state.index}`}
+            question={current}
+            value={state.answers[current.id] ?? ""}
+            onChange={answerUpdate}
+            onNext={goNext}
+            onBack={goBack}
+            canBack={state.index > -1}
+            step={state.index + 1}
+            total={totalQuestions}
+          />
+        )}
+
+        {state.index === totalQuestions &&
+          state.archetype &&
+          !showDetail &&
+          !showEnd && (
             <motion.div
-              key="welcome"
+              key="result"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -40 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
-              <WelcomeScreen onContinue={continueFromWelcome} />
-            </motion.div>
-          )}
-
-          {state.index === -1 && (
-            <motion.div
-              key="intro"
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -40 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-            >
-              <IntroForm onStart={start} />
-            </motion.div>
-          )}
-
-          {state.index >= 0 && state.index < totalQuestions && current && (
-            <motion.div
-              key={`question-${state.index}`}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
-            >
-              <QuestionView
-                question={current}
-                value={state.answers[current.id] ?? ""}
-                onChange={answerUpdate}
-                onNext={goNext}
-                onBack={goBack}
-                canBack={state.index > -1}
-                step={state.index + 1}
-                total={totalQuestions}
+              <ResultView
+                archetype={state.archetype}
+                onRestart={restart}
+                onExplore={exploreArchetype}
               />
             </motion.div>
           )}
 
-          {state.index === totalQuestions &&
-            state.archetype &&
-            !showDetail &&
-            !showEnd && (
-              <motion.div
-                key="result"
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -40 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              >
-                <ResultView
-                  archetype={state.archetype}
-                  onRestart={restart}
-                  onExplore={exploreArchetype}
-                />
-              </motion.div>
-            )}
+        {showDetail && (
+          <motion.div
+            key="detail"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <ArchetypeDetail type={showDetail} onBack={backToResults} />
+          </motion.div>
+        )}
 
-          {showDetail && (
-            <motion.div
-              key="detail"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-            >
-              <ArchetypeDetail type={showDetail} onBack={backToResults} />
-            </motion.div>
-          )}
-
-          {showEnd && (
-            <motion.div
-              key="end"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-            >
-              <EndScreen onRestart={restart} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+        {showEnd && (
+          <motion.div
+            key="end"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <EndScreen onRestart={restart} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

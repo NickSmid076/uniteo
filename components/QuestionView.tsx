@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import type { ChangeEvent } from "react";
+
 import { useApp } from "../context/AppContext";
 import { type Question } from "../types/quiz";
 import { getTranslation } from "../utils/i18n";
@@ -10,7 +11,7 @@ import OptionButton from "./OptionButton";
 type Props = {
   question: Question;
   value: string;
-  onChange: (v: string) => void;
+  onChange: (value: string) => void;
   onNext: () => void;
   onBack: () => void;
   canBack: boolean;
@@ -39,55 +40,41 @@ export default function QuestionView({
   const canContinue =
     question.kind === "text" ? value.trim().length > 0 : Boolean(value);
 
+  const optionCount = question.options?.length ?? 0;
+  const columns =
+    optionCount === 4 ? "2" : optionCount === 5 ? "mixed" : "1";
+
   return (
-    <motion.div
+    <motion.section
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="relative w-full max-w-md mx-auto px-5 sm:px-6 py-6 sm:py-10 overflow-hidden"
+      exit={{ opacity: 0, y: -24 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      className="surface-card"
     >
-      {/* ✨ Ambient gradient backdrop */}
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10 rounded-[2rem]"
-        style={{
-          background:
-            "radial-gradient(80% 50% at 50% -10%, rgba(0,191,165,0.10), transparent 70%), radial-gradient(50% 40% at 50% 100%, rgba(255,255,255,0.04), transparent 80%)",
-        }}
-      />
-
-      {/* Progress + Back */}
-      <div className="flex items-start justify-between gap-3 mb-5 text-xs sm:text-sm text-foreground/60">
-        <span className="uppercase tracking-widest font-medium">
+      <div className="flex items-start justify-between gap-4 text-xs uppercase tracking-[0.18em] text-foreground-soft">
+        <span>
           {label} {step} {of} {total}
         </span>
-
         {canBack && (
           <button
-            onClick={onBack}
-            className="text-foreground/70 hover:text-primary transition font-medium"
             type="button"
+            onClick={onBack}
+            className="text-foreground-muted hover:text-primary transition"
           >
             ← {step === 1 ? backIntro : backLabel}
           </button>
         )}
       </div>
 
-      {/* Question text */}
-      <h2 className="text-2xl sm:text-3xl font-bold leading-snug text-foreground mb-3">
-        {question.title}
-      </h2>
+      <header className="mt-4 space-y-3 text-left">
+        <h2 className="heading-xl">{question.title}</h2>
+        {question.hint && <p className="body-md">{question.hint}</p>}
+      </header>
 
-      {question.hint && (
-        <p className="text-sm sm:text-base text-foreground/70 leading-relaxed mb-5">
-          {question.hint}
-        </p>
-      )}
-
-      {/* Choice or Text */}
-      <div className="space-y-3 sm:space-y-4">
-        {question.kind === "choice" &&
-          question.options?.map((opt) => (
+      {question.kind === "choice" && (
+        <div className="option-grid" data-columns={columns}>
+          {question.options?.map((opt) => (
             <OptionButton
               key={opt.value}
               label={opt.label}
@@ -95,50 +82,45 @@ export default function QuestionView({
               onClick={() => onChange(opt.value)}
             />
           ))}
+        </div>
+      )}
 
-        {question.kind === "text" && (
-          <motion.textarea
-            whileFocus={{ scale: 1.01 }}
-            className="w-full min-h-[150px] sm:min-h-[180px] bg-white/[0.04] border border-white/10 rounded-3xl px-4 py-3 text-sm sm:text-base text-foreground placeholder-foreground/40 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary/60 transition"
-            placeholder={textPlaceholder}
-            value={value}
-            onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
-              onChange(event.target.value)
-            }
-          />
-        )}
-      </div>
+      {question.kind === "text" && (
+        <motion.textarea
+          whileFocus={{ scale: 1.01 }}
+          className="answer-field"
+          placeholder={textPlaceholder}
+          value={value}
+          onChange={(event: ChangeEvent<HTMLTextAreaElement>) =>
+            onChange(event.target.value)
+          }
+        />
+      )}
 
-      {/* Navigation */}
-      <div className="mt-8 flex flex-col sm:flex-row sm:justify-between gap-3">
+      <div className="quiz-controls">
         {canBack && (
           <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={onBack}
-            className="w-full sm:w-auto px-6 py-3 rounded-full border border-white/10 text-sm font-medium text-foreground/80 hover:bg-white/[0.05] transition backdrop-blur-md"
             type="button"
+            className="btn-secondary"
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onBack}
           >
             ← {backLabel}
           </motion.button>
         )}
 
         <motion.button
-          whileHover={canContinue ? { scale: 1.03 } : {}}
-          whileTap={canContinue ? { scale: 0.97 } : {}}
-          onClick={onNext}
-          disabled={!canContinue}
           type="button"
-          className={`w-full sm:w-auto px-6 py-3 rounded-full font-semibold transition-all duration-300 shadow-[0_0_24px_rgba(0,191,165,0.25)]
-            ${
-              canContinue
-                ? "bg-gradient-to-r from-[#00BFA5] to-[#00d3b9] text-black hover:from-[#00d3b9] hover:to-[#00BFA5]"
-                : "bg-white/[0.06] text-foreground/40 cursor-not-allowed shadow-none"
-            }`}
+          className="btn-primary"
+          disabled={!canContinue}
+          whileHover={canContinue ? { y: -2 } : undefined}
+          whileTap={canContinue ? { scale: 0.98 } : undefined}
+          onClick={onNext}
         >
           {nextLabel}
         </motion.button>
       </div>
-    </motion.div>
+    </motion.section>
   );
 }

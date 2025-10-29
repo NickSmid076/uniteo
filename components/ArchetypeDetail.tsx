@@ -1,161 +1,170 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { type ArchetypeId } from "../types/quiz";
+import { useMemo } from "react";
+
 import { useApp } from "../context/AppContext";
+import type { ArchetypeId } from "../types/quiz";
+import { getTranslation, type Locale } from "../utils/i18n";
 
-type Props = { type: ArchetypeId; onBack: () => void };
+type Props = {
+  type: ArchetypeId;
+  onBack: () => void;
+};
 
-type ArchetypeInfo = {
+type ArchetypeCopy = {
   title: string;
   description: string;
   traits: string[];
   growth: string;
 };
 
-/* === English Data === */
-const ARCHETYPE_DATA_EN: Record<ArchetypeId, ArchetypeInfo> = {
-  Connector: {
-    title: "Connector 🌿",
-    description:
-      "You bring people together and thrive on meaningful collaboration. You energize others and create networks where ideas grow.",
-    traits: [
-      "Strong empathy & communication",
-      "Driven by relationships",
-      "Creates belonging & trust",
-    ],
-    growth:
-      "Collaborate on new initiatives or mentor others in your network.",
+const COPY = {
+  en: {
+    Connector: {
+      title: "Connector 🌿",
+      description:
+        "You bring people together and thrive on meaningful collaboration. You energize others and create networks where ideas grow.",
+      traits: [
+        "Strong empathy & communication",
+        "Driven by relationships",
+        "Creates belonging & trust",
+      ],
+      growth:
+        "Collaborate on new initiatives or mentor others in your network.",
+    },
+    Builder: {
+      title: "Builder 🧱",
+      description:
+        "You turn ideas into tangible results. You find joy in structure, planning, and transforming concepts into impact.",
+      traits: [
+        "Organized and practical",
+        "Goal-oriented mindset",
+        "Thrives on progress and clarity",
+      ],
+      growth:
+        "Work on long-term projects or help others bring structure to their goals.",
+    },
+    Explorer: {
+      title: "Explorer 🌍",
+      description:
+        "You are curious, inspired, and driven by discovery. You love exploring ideas, learning, and trying new paths.",
+      traits: [
+        "Adventurous spirit",
+        "Loves learning and experimenting",
+        "Energized by change and novelty",
+      ],
+      growth:
+        "Seek variety and share what you learn — your curiosity inspires others.",
+    },
+    Reflector: {
+      title: "Reflector 🪞",
+      description:
+        "You bring depth, calm, and perspective. You help others slow down, think deeply, and grow through reflection.",
+      traits: [
+        "Introspective and balanced",
+        "Sees patterns and insights",
+        "Values authenticity and harmony",
+      ],
+      growth:
+        "Create spaces for reflection or guide others toward clarity and balance.",
+    },
   },
-  Builder: {
-    title: "Builder 🧱",
-    description:
-      "You turn ideas into tangible results. You find joy in structure, planning, and transforming concepts into impact.",
-    traits: [
-      "Organized and practical",
-      "Goal-oriented mindset",
-      "Thrives on progress and clarity",
-    ],
-    growth:
-      "Work on long-term projects or help others bring structure to their goals.",
+  nl: {
+    Connector: {
+      title: "Connector 🌿",
+      description:
+        "Je brengt mensen samen en bloeit op door betekenisvolle samenwerking. Je inspireert anderen en bouwt netwerken waarin ideeën groeien.",
+      traits: [
+        "Sterke empathie en communicatie",
+        "Gedreven door relaties",
+        "Creëert verbinding en vertrouwen",
+      ],
+      growth:
+        "Werk samen aan nieuwe initiatieven of coach anderen binnen je netwerk.",
+    },
+    Builder: {
+      title: "Builder 🧱",
+      description:
+        "Je zet ideeën om in tastbare resultaten. Structuur, planning en impact geven je voldoening.",
+      traits: [
+        "Georganiseerd en praktisch",
+        "Doelgerichte mindset",
+        "Gedijt op vooruitgang en duidelijkheid",
+      ],
+      growth:
+        "Werk aan langetermijnprojecten of help anderen structuur te brengen in hun doelen.",
+    },
+    Explorer: {
+      title: "Explorer 🌍",
+      description:
+        "Je bent nieuwsgierig, geïnspireerd en gemotiveerd door ontdekking. Je houdt van leren, ideeën verkennen en nieuwe paden bewandelen.",
+      traits: [
+        "Avontuurlijke geest",
+        "Houdt van leren en experimenteren",
+        "Krijgt energie van verandering en vernieuwing",
+      ],
+      growth:
+        "Zoek variatie en deel wat je leert — jouw nieuwsgierigheid inspireert anderen.",
+    },
+    Reflector: {
+      title: "Reflector 🪞",
+      description:
+        "Je brengt diepte, rust en perspectief. Je helpt anderen vertragen, nadenken en groeien door reflectie.",
+      traits: [
+        "Introspectief en evenwichtig",
+        "Ziet patronen en inzichten",
+        "Hecht waarde aan authenticiteit en harmonie",
+      ],
+      growth:
+        "Creëer momenten van reflectie of begeleid anderen naar helderheid en balans.",
+    },
   },
-  Explorer: {
-    title: "Explorer 🌍",
-    description:
-      "You are curious, inspired, and driven by discovery. You love exploring ideas, learning, and trying new paths.",
-    traits: [
-      "Adventurous spirit",
-      "Loves learning and experimenting",
-      "Energized by change and novelty",
-    ],
-    growth:
-      "Seek variety and share what you learn — your curiosity inspires others.",
-  },
-  Reflector: {
-    title: "Reflector 🪞",
-    description:
-      "You bring depth, calm, and perspective. You help others slow down, think deeply, and grow through reflection.",
-    traits: [
-      "Introspective and balanced",
-      "Sees patterns and insights",
-      "Values authenticity and harmony",
-    ],
-    growth:
-      "Create spaces for reflection or guide others toward clarity and balance.",
-  },
-};
-
-/* === Dutch data mirrors your current NL set (omitted for brevity) === */
+} satisfies Record<Locale, Record<ArchetypeId, ArchetypeCopy>>;
 
 export default function ArchetypeDetail({ type, onBack }: Props) {
-  const { language, theme } = useApp();
-
-  // ✅ Only one `data` variable
-  const data =
-    language === "nl"
-      ? ARCHETYPE_DATA_NL[type]
-      : ARCHETYPE_DATA_EN[type];
+  const { language } = useApp();
+  const copy = useMemo(() => COPY[language]?.[type] ?? COPY.en[type], [language, type]);
+  const backLabel = getTranslation(language, "back_to_results");
 
   return (
     <motion.section
+      className="surface-card"
       initial={{ opacity: 0, y: 28 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -28 }}
+      exit={{ opacity: 0, y: -18 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="relative w-full max-w-2xl mx-auto px-6 py-12 text-center sm:py-16"
     >
-      {/* ✨ Soft ambient glow */}
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10 rounded-[2rem]"
-        style={{
-          background:
-            "radial-gradient(70% 50% at 50% -10%, rgba(0,191,165,0.18), transparent 70%)",
-        }}
-      />
+      <header className="space-y-3">
+        <h2 className="heading-xl text-left sm:text-center">{copy.title}</h2>
+        <p className="body-md text-left sm:text-center">{copy.description}</p>
+      </header>
 
-      {/* Title + Description */}
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.5 }}
-        className="mb-6 sm:mb-8"
+        className="rounded-[1.75rem] border border-white/10 bg-white/5 dark:bg-white/4 backdrop-blur-xl p-6 mt-6"
+        whileHover={{ scale: 1.01 }}
+        transition={{ type: "spring", stiffness: 160, damping: 18 }}
       >
-        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
-          {data.title}
-        </h2>
-        <p className="text-foreground/75 leading-relaxed text-base sm:text-lg max-w-xl mx-auto">
-          {data.description}
-        </p>
-      </motion.div>
-
-      {/* Traits */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        className="glass-panel p-6 sm:p-8 text-left sm:text-center shadow-[0_0_40px_rgba(0,191,165,0.15)]"
-      >
-        <ul className="space-y-3 sm:space-y-4 text-foreground/90 text-sm sm:text-base">
-          {data.traits.map((trait) => (
-            <motion.li
-              key={trait}
-              whileHover={{ scale: 1.02, x: 4 }}
-              transition={{ type: "spring", stiffness: 250, damping: 18 }}
-              className="flex items-start sm:items-center gap-3"
-            >
-              <span className="text-primary text-lg sm:text-xl leading-none mt-[2px]">
-                ●
-              </span>
-              <span>{trait}</span>
-            </motion.li>
+        <ul className="space-y-3">
+          {copy.traits.map((trait) => (
+            <li key={trait} className="flex items-start gap-3 text-foreground">
+              <span className="text-primary mt-1">●</span>
+              <span className="text-sm sm:text-base">{trait}</span>
+            </li>
           ))}
         </ul>
       </motion.div>
 
-      {/* Growth */}
-      <motion.p
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        className="mt-8 text-foreground/70 italic text-base leading-relaxed max-w-lg mx-auto"
-      >
-        {data.growth}
-      </motion.p>
+      <p className="body-md italic mt-6 text-left sm:text-center">{copy.growth}</p>
 
-      {/* Back Button */}
       <motion.button
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
+        className="btn-secondary mt-8 w-full sm:w-auto"
+        whileHover={{ y: -2 }}
+        whileTap={{ scale: 0.98 }}
         onClick={onBack}
         type="button"
-        className={`btn btn-primary mt-10 sm:mt-12 px-8 py-3 sm:px-10 sm:py-4 text-base sm:text-lg font-semibold tracking-tight shadow-[0_0_32px_rgba(0,191,165,0.25)] ${
-          theme === "dark"
-            ? "text-black"
-            : "text-white bg-gradient-to-r from-[#00BFA5] to-[#00D3B9]"
-        }`}
       >
-        {language === "en" ? "← Back to Results" : "← Terug naar resultaten"}
+        ← {backLabel}
       </motion.button>
     </motion.section>
   );
