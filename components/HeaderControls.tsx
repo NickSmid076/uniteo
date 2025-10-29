@@ -1,6 +1,7 @@
 "use client";
 
 import { useApp } from "../context/AppContext";
+import { getTranslation } from "../utils/i18n";
 
 export default function HeaderControls() {
   const { theme, toggleTheme, language, toggleLanguage } = useApp();
@@ -9,6 +10,11 @@ export default function HeaderControls() {
     theme === "dark"
       ? "bg-white/10 text-white hover:bg-white/20"
       : "bg-black/10 text-black hover:bg-black/20";
+  const languageTitle = getTranslation(language, "language_toggle");
+  const themeTitle = getTranslation(
+    language,
+    theme === "dark" ? "theme_toggle_light" : "theme_toggle_dark"
+  );
 
   return (
     <div className="fixed top-3 right-3 sm:top-5 sm:right-5 flex gap-2 sm:gap-3 items-center text-xs sm:text-sm z-50">
@@ -16,7 +22,8 @@ export default function HeaderControls() {
       <button
         onClick={toggleLanguage}
         className={`px-2.5 py-1 sm:px-3 rounded-full transition font-medium shadow-sm backdrop-blur-sm ${sharedButton}`}
-        title="Change language"
+        title={languageTitle}
+        aria-label={languageTitle}
       >
         {language === "en" ? "🇬🇧 EN" : "🇳🇱 NL"}
       </button>
@@ -25,8 +32,8 @@ export default function HeaderControls() {
       <button
         onClick={toggleTheme}
         className={`px-2.5 py-1 sm:px-3 rounded-full transition font-medium shadow-sm backdrop-blur-sm ${sharedButton}`}
-        title="Toggle theme"
-        aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+        title={themeTitle}
+        aria-label={themeTitle}
       >
         {theme === "dark" ? "☀️" : "🌙"}
       </button>

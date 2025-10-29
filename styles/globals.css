@@ -9,11 +9,13 @@
 
 /* === Base Theme Variables === */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+  --background: #04060d;
+  --foreground: #f5f7fa;
   --primary: #00bfa5;
-  --accent: #009c88;
-  --muted: #9ca3af;
+  --accent: #0d8f7d;
+  --muted: #4b5563;
+  --glass: rgba(255, 255, 255, 0.06);
 
   --font-sans: var(--font-geist-sans, Inter, system-ui, sans-serif);
   --font-mono: var(--font-geist-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
@@ -22,11 +24,14 @@
   --transition: 0.3s ease;
 }
 
-/* === Dark Mode (manual + system) === */
-html.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+html:not(.dark) {
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #171717;
+  --primary: #00bfa5;
+  --accent: #00a28f;
   --muted: #9ca3af;
+  --glass: rgba(15, 23, 42, 0.05);
 }
 
 /* === Base Reset === */
@@ -45,6 +50,10 @@ html {
 body {
   min-height: 100vh;
   background-color: var(--background);
+  background-image:
+    radial-gradient(120% 120% at 50% 0%, rgba(0, 191, 165, 0.14), transparent 60%),
+    radial-gradient(90% 90% at 15% 15%, rgba(0, 162, 143, 0.18), transparent 55%),
+    linear-gradient(140deg, rgba(10, 12, 22, 0.92), rgba(4, 6, 13, 0.94));
   color: var(--foreground);
   font-family: var(--font-sans);
   font-weight: 400;
@@ -53,6 +62,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   transition: background-color var(--transition), color var(--transition);
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 30% at 80% 10%, rgba(0, 191, 165, 0.25), transparent 70%),
+    radial-gradient(30% 25% at 20% 0%, rgba(91, 33, 182, 0.2), transparent 65%);
+  filter: blur(0px);
+  opacity: 0.75;
+  z-index: -1;
 }
 
 /* === Typography === */
@@ -126,7 +150,7 @@ button:active {
 input,
 textarea {
   width: 100%;
-  border: 1px solid var(--muted);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background-color: transparent;
   color: var(--foreground);
   border-radius: var(--radius);
@@ -142,6 +166,17 @@ input:focus,
 textarea:focus {
   outline: none;
   border-color: var(--primary);
+  background-color: rgba(0, 191, 165, 0.1);
+}
+
+html:not(.dark) input,
+html:not(.dark) textarea {
+  border-color: rgba(23, 23, 23, 0.12);
+  background-color: rgba(23, 23, 23, 0.02);
+}
+
+html:not(.dark) input:focus,
+html:not(.dark) textarea:focus {
   background-color: rgba(0, 191, 165, 0.08);
 }
 

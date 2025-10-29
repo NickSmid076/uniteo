@@ -19,7 +19,7 @@ const LANGUAGE_STORAGE_KEY = "uniteo-lang";
 const isBrowser = () => typeof window !== "undefined";
 
 const readStoredTheme = (): Theme => {
-  if (!isBrowser()) return "light";
+  if (!isBrowser()) return "dark";
 
   const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
   if (storedTheme === "light" || storedTheme === "dark") return storedTheme;
@@ -42,7 +42,7 @@ const readStoredLanguage = (): Locale => {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("dark");
   const [language, setLanguage] = useState<Locale>("en");
   const [, startPreferenceTransition] = useTransition();
 

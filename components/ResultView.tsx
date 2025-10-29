@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useApp } from "../context/AppContext";
 import { type ArchetypeId } from "../types/quiz";
+import { getTranslation } from "../utils/i18n";
 
 type Props = {
   archetype: ArchetypeId;
@@ -30,6 +31,8 @@ export default function ResultView({ archetype, onRestart, onExplore }: Props) {
   const { language, theme } = useApp();
 
   const copy = language === "nl" ? COPY_NL[archetype] : COPY[archetype];
+  const restartLabel = getTranslation(language, "result_restart");
+  const exploreLabel = getTranslation(language, "result_explore");
 
   return (
     <motion.div
@@ -52,14 +55,14 @@ export default function ResultView({ archetype, onRestart, onExplore }: Props) {
           onClick={onRestart}
           className="w-full sm:w-auto px-6 py-3 rounded-full bg-primary text-black font-semibold hover:bg-primary/90 transition shadow-soft"
         >
-          {language === "en" ? "Restart Quiz" : "Herstart de quiz"}
+          {restartLabel}
         </button>
       </div>
 
       {/* Other archetypes */}
       <div className="mt-10">
         <p className="text-sm text-foreground/60 mb-3">
-          {language === "en" ? "View other archetypes:" : "Bekijk andere archetypen:"}
+          {exploreLabel}
         </p>
 
         <div className="flex flex-wrap gap-2.5 justify-start sm:justify-center">

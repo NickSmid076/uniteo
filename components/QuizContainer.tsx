@@ -1,8 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useApp } from "../context/AppContext";
 import { type ArchetypeId, type Question, type QuizState } from "../types/quiz";
 
-import { QUESTIONS } from "../utils/questions";
+import { getTranslation } from "../utils/i18n";
+import { QUESTIONS_ORDER, getQuestions } from "../utils/questions";
 import { calculateArchetype } from "../utils/scoring";
 import { clearState, loadState, saveState } from "../utils/storage";
 import { submitQuiz } from "../utils/submitQuiz";
@@ -15,8 +17,6 @@ import WelcomeScreen from "./WelcomeScreen";
 import ArchetypeDetail from "./ArchetypeDetail";
 import EndScreen from "./EndScreen";
 
-const TOTAL = QUESTIONS.length;
-
 const INITIAL: QuizState = {
   name: "",
   age: "",
@@ -26,6 +26,10 @@ const INITIAL: QuizState = {
 };
 
 export default function QuizContainer() {
+  const { language } = useApp();
+  const questions = useMemo(() => getQuestions(language), [language]);
+  const totalQuestions = questions.length;
+
   const [state, setState] = useState<QuizState>(INITIAL);
   const [showDetail, setShowDetail] = useState<ArchetypeId | null>(null);
   const [showEnd, setShowEnd] = useState(false);
@@ -33,7 +37,7 @@ export default function QuizContainer() {
   const [, startHydrationTransition] = useTransition();
   const hasHydrated = useRef(false);
 
-  const progressStep = Math.max(0, Math.min(state.index + 1, TOTAL));
+  const progressStep = Math.max(0, Math.min(state.index + 1, totalQuestions));
 
   // hydrate from localStorage after mount
   useEffect(() => {
@@ -54,10 +58,10 @@ export default function QuizContainer() {
     saveState(state);
   }, [state]);
 
-  const current = useMemo<Question | undefined>(
-    () => (state.index >= 0 && state.index < TOTAL ? QUESTIONS[state.index] : undefined),
-    [state.index]
-  );
+  const current = useMemo<Question | undefined>(() => {
+    if (state.index < 0 || state.index >= totalQuestions) return undefined;
+    return questions[state.index];
+  }, [state.index, totalQuestions, questions]);
 
   function start(payload: { name: string; age: string; email: string }) {
     setState((s: QuizState) => ({ ...s, ...payload, index: 0 }));
@@ -69,14 +73,14 @@ export default function QuizContainer() {
   }
 
   async function goNext() {
-    if (state.index < TOTAL - 1) {
+    if (state.index < totalQuestions - 1) {
       setState((s: QuizState) => ({ ...s, index: s.index + 1 }));
       return;
     }
 
     // finished -> compute archetype
     const arch = calculateArchetype(state.answers);
-    setState((s: QuizState) => ({ ...s, index: TOTAL, archetype: arch }));
+    setState((s: QuizState) => ({ ...s, index: totalQuestions, archetype: arch }));
 
     // submit to backend
     const payload = {
@@ -84,7 +88,7 @@ export default function QuizContainer() {
       age: state.age,
       email: state.email,
       archetype: arch,
-      answers: QUESTIONS.map((q: Question) => state.answers[q.id] ?? ""),
+      answers: QUESTIONS_ORDER.map((question: Question) => state.answers[question.id] ?? ""),
     };
 
     setSubmitting(true);
@@ -130,12 +134,12 @@ export default function QuizContainer() {
     <main className="min-h-dvh bg-[var(--background)] text-[var(--foreground)] flex items-center justify-center px-3 sm:px-8 py-8 sm:py-20 transition-colors duration-300">
       <div className="w-full max-w-2xl text-center relative space-y-6 sm:space-y-8">
         {/* Progress bar + saving indicator */}
-        {state.index >= 0 && state.index < TOTAL && (
+        {state.index >= 0 && state.index < totalQuestions && (
           <div className="space-y-2 px-1 sm:px-0">
-            <Progress step={progressStep} total={TOTAL} />
+            <Progress step={progressStep} total={totalQuestions} />
             {submitting && (
               <p className="text-xs sm:text-sm text-primary/80 animate-pulse">
-                Saving your results...
+                {getTranslation(language, "saving_results")}
               </p>
             )}
           </div>
@@ -169,7 +173,7 @@ export default function QuizContainer() {
           )}
 
           {/* Questions */}
-          {state.index >= 0 && state.index < TOTAL && current && (
+          {state.index >= 0 && state.index < totalQuestions && current && (
             <motion.div
               key={`question-${state.index}`}
               initial={{ opacity: 0, x: 50 }}
@@ -185,13 +189,13 @@ export default function QuizContainer() {
                 onBack={goBack}
                 canBack={state.index > -1}
                 step={state.index + 1}
-                total={TOTAL}
+                total={totalQuestions}
               />
             </motion.div>
           )}
 
           {/* Results */}
-          {state.index === TOTAL && state.archetype && !showDetail && !showEnd && (
+          {state.index === totalQuestions && state.archetype && !showDetail && !showEnd && (
             <motion.div
               key="result"
               initial={{ opacity: 0, y: 40 }}

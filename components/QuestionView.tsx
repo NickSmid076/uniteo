@@ -1,5 +1,7 @@
 import type { ChangeEvent } from "react";
+import { useApp } from "../context/AppContext";
 import { type Question } from "../types/quiz";
+import { getTranslation } from "../utils/i18n";
 import OptionButton from "./OptionButton";
 
 type Props = {
@@ -16,13 +18,21 @@ type Props = {
 export default function QuestionView({
   question, value, onChange, onNext, onBack, canBack, step, total,
 }: Props) {
+  const { language } = useApp();
+  const label = getTranslation(language, "question_label");
+  const of = getTranslation(language, "question_of");
+  const backLabel = getTranslation(language, "question_back");
+  const backIntro = getTranslation(language, "question_back_intro");
+  const nextLabel = getTranslation(language, "question_next");
+  const textPlaceholder = getTranslation(language, "question_text_placeholder");
+
   const canContinue = question.kind === "text" ? value.trim().length > 0 : Boolean(value);
 
   return (
     <div className="w-full max-w-xl mx-auto px-1 sm:px-0">
       <div className="flex items-start justify-between gap-3 mb-4 text-xs sm:text-sm text-foreground/60">
         <span className="uppercase tracking-widest font-medium">
-          Question {step} of {total}
+          {label} {step} {of} {total}
         </span>
         {canBack && (
           <button
@@ -30,7 +40,7 @@ export default function QuestionView({
             className="text-foreground/70 hover:text-foreground transition font-medium"
             type="button"
           >
-            ← {step === 1 ? "Intro" : "Back"}
+            ← {step === 1 ? backIntro : backLabel}
           </button>
         )}
       </div>
@@ -54,7 +64,7 @@ export default function QuestionView({
         {question.kind === "text" && (
           <textarea
             className="w-full min-h-[150px] sm:min-h-[180px] bg-white/8 dark:bg-white/5 border border-foreground/15 rounded-3xl px-4 py-3 text-sm sm:text-base outline-none focus:ring-2 focus:ring-primary/60 transition"
-            placeholder="Type your answer..."
+            placeholder={textPlaceholder}
             value={value}
             onChange={(event: ChangeEvent<HTMLTextAreaElement>) => onChange(event.target.value)}
           />
@@ -82,7 +92,7 @@ export default function QuestionView({
             }`}
           type="button"
         >
-          Next →
+          {nextLabel}
         </button>
       </div>
     </div>

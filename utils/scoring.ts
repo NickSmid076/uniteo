@@ -1,5 +1,5 @@
 import { type ArchetypeId } from "../types/quiz";
-import { QUESTIONS } from "./questions";
+import { QUESTIONS_ORDER } from "./questions";
 
 /**
  * Keywords mapped to each archetype.
@@ -14,6 +14,13 @@ const KEYWORDS: Record<ArchetypeId, string[]> = {
     "relationship",
     "social",
     "like-minded",
+    "samenwerking",
+    "netwerk",
+    "mensen",
+    "verbinding",
+    "relatie",
+    "community",
+    "gelijkgestem",
   ],
   Builder: [
     "structure",
@@ -23,6 +30,14 @@ const KEYWORDS: Record<ArchetypeId, string[]> = {
     "organization",
     "plan",
     "hands-on",
+    "structuur",
+    "doel",
+    "project",
+    "focus",
+    "organisatie",
+    "plan",
+    "praktisch",
+    "handen",
   ],
   Explorer: [
     "inspiration",
@@ -31,6 +46,13 @@ const KEYWORDS: Record<ArchetypeId, string[]> = {
     "challenge",
     "discovery",
     "creativity",
+    "inspiratie",
+    "idee",
+    "nieuwsgierigheid",
+    "uitdaging",
+    "ontdekking",
+    "creativiteit",
+    "vernieuwing",
   ],
   Reflector: [
     "balance",
@@ -39,6 +61,12 @@ const KEYWORDS: Record<ArchetypeId, string[]> = {
     "introspection",
     "clarity",
     "reflect",
+    "balans",
+    "feedback",
+    "rust",
+    "introspectie",
+    "helderheid",
+    "reflectie",
   ],
 };
 
@@ -57,7 +85,7 @@ export function calculateArchetype(
   };
 
   // deterministic answer order
-  const answers = QUESTIONS.map((q) => answersMap[q.id] || "");
+  const answers = QUESTIONS_ORDER.map((q) => answersMap[q.id] || "");
 
   // keyword-based matching
   answers.forEach((raw) => {
@@ -75,20 +103,29 @@ export function calculateArchetype(
 
   // heuristic boosts from specific questions
   const q1 = answersMap[1]?.toLowerCase() ?? "";
-  if (q1.includes("collab")) scores.Connector++;
-  if (q1.includes("inspiration")) scores.Explorer++;
-  if (q1.includes("balance")) scores.Reflector++;
-  if (q1.includes("growth") || q1.includes("direction")) scores.Builder++;
+  if (q1.includes("collab") || q1.includes("samenwerk") || q1.includes("gelijkgestem"))
+    scores.Connector++;
+  if (q1.includes("inspiration") || q1.includes("inspiratie")) scores.Explorer++;
+  if (q1.includes("balance") || q1.includes("balans") || q1.includes("rust"))
+    scores.Reflector++;
+  if (
+    q1.includes("growth") ||
+    q1.includes("direction") ||
+    q1.includes("groei") ||
+    q1.includes("richting")
+  )
+    scores.Builder++;
 
   const q2 = answersMap[2]?.toLowerCase() ?? "";
-  if (q2.includes("hands-on") || q2.includes("mentorship")) scores.Builder++;
-  if (q2.includes("conversations")) scores.Connector++;
-  if (q2.includes("challenges")) scores.Explorer++;
+  if (q2.includes("hands-on") || q2.includes("project") || q2.includes("mentor"))
+    scores.Builder++;
+  if (q2.includes("conversations") || q2.includes("gesprek")) scores.Connector++;
+  if (q2.includes("challenges") || q2.includes("uitdaging")) scores.Explorer++;
 
   const q10 = answersMap[10]?.toLowerCase() ?? "";
-  if (q10.includes("like-minded")) scores.Connector++;
-  if (q10.includes("structure")) scores.Builder++;
-  if (q10.includes("inspiration")) scores.Explorer++;
+  if (q10.includes("like-minded") || q10.includes("gelijkgestem")) scores.Connector++;
+  if (q10.includes("structure") || q10.includes("structuur")) scores.Builder++;
+  if (q10.includes("inspiration") || q10.includes("inspiratie")) scores.Explorer++;
   if (q10.includes("feedback")) scores.Reflector++;
 
   // determine top archetype
